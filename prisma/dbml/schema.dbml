@@ -1,0 +1,229 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table feedbacks {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  userId String [default: 'anonymous']
+  ratings Int [not null, default: 0]
+  feature String
+  description String
+  problemFaced String
+  suggestion String
+  role Role [not null]
+}
+
+Table users {
+  id String [pk]
+  username String [unique, not null]
+  password String [not null]
+  emailVerified Boolean [not null, default: false]
+  appointments appointments [not null]
+  emergencyContact users_emergency_contact
+  userinfo users_infos
+}
+
+Table users_infos {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  firstname String [not null]
+  lastname String [not null]
+  salutation Salutation [not null]
+  existingConditions Json
+  gender Gender [not null]
+  email String [not null]
+  phoneNumber String [not null]
+  role Role [not null, default: 'User']
+  postalCode String [not null]
+  address String [not null]
+  userId String [unique, not null]
+  dateOfBirth DateTime [not null]
+  user users [not null]
+
+  indexes {
+    (userId, email) [unique]
+  }
+}
+
+Table users_emergency_contact {
+  id String [pk]
+  firstname String [not null]
+  lastname String [not null]
+  salutation Salutation [not null]
+  gender Gender [not null]
+  phoneNumber String [not null]
+  postalCode String [not null]
+  address String [not null]
+  userId String [unique, not null]
+  relationship Relationship [not null]
+  user users [not null]
+}
+
+Table health_facilities {
+  id String [pk]
+  username String [unique, not null]
+  password String [not null]
+  emailVerified Boolean [not null, default: false]
+  appointments appointments [not null]
+  doctors doctors [not null]
+  healthFacilityInfo health_facilities_infos
+}
+
+Table health_facilities_infos {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  name String [not null]
+  phoneNumber String [not null]
+  streetName String
+  buildingName String
+  postalCode String [not null]
+  blockNumber String
+  floorNumber String
+  unitNumber String
+  email String [not null]
+  role Role [not null, default: 'HealthFacility']
+  healthFacilityId String [unique, not null]
+  website String
+  healthFacility health_facilities [not null]
+
+  indexes {
+    (healthFacilityId, email) [unique]
+  }
+}
+
+Table doctors {
+  id String [pk]
+  firstname String [not null]
+  lastname String [not null]
+  salutation Salutation [not null]
+  gender Gender [not null]
+  address String [not null]
+  phoneNumber String [not null]
+  healthFacilityId String
+  HealthFacility health_facilities
+}
+
+Table appointments {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  gender Gender [not null]
+  age Int [not null]
+  appointmentStart DateTime [not null]
+  appointmentEnd DateTime [not null]
+  appointmentDuration Int [not null, default: 1]
+  symptoms Json [not null]
+  userId String
+  healthFacilityId String [not null]
+  healthFacility health_facilities [not null]
+  user users
+  appointmentStatus appointments_status
+}
+
+Table appointments_status {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  status Status [not null, default: 'Pending']
+  remarks String
+  appointmentId String [unique, not null]
+  appointment appointments [not null]
+}
+
+Table clinics {
+  id String [pk]
+  lat Float [not null]
+  x_cor Float [not null]
+  y_cor Float [not null]
+  name String [not null]
+  license_type String [not null]
+  phone_number String
+  postal_code String [not null]
+  block_no String
+  floor_no String
+  unit_no String
+  street_name String
+  building_name String
+  addr_type String
+  address String [not null]
+  clinic_prog_code Json [not null]
+  createdAt DateTime [default: `now()`, not null]
+  hci_code String [not null]
+  updatedAt DateTime [not null]
+  lng Float [not null]
+}
+
+Table verification_tokens {
+  id String [pk]
+  token String [unique, not null]
+  email String [not null]
+  expires DateTime [not null]
+  role Role [not null]
+
+  indexes {
+    (email, token) [unique]
+  }
+}
+
+Enum Salutation {
+  Mr
+  Mrs
+  Miss
+}
+
+Enum Gender {
+  Male
+  Female
+}
+
+Enum Role {
+  User
+  HealthFacility
+}
+
+Enum Status {
+  Pending
+  Approved
+  Rejected
+}
+
+Enum Priority {
+  Low
+  High
+}
+
+Enum Relationship {
+  Mother
+  Father
+  Sister
+  Brother
+  Spouse
+  Child
+  Grandparent
+  Grandchild
+  Aunt
+  Uncle
+  Niece
+  Nephew
+  Cousin
+  Friend
+  Other
+}
+
+Ref: users_infos.userId - users.id [delete: Cascade]
+
+Ref: users_emergency_contact.userId - users.id [delete: Cascade]
+
+Ref: health_facilities_infos.healthFacilityId - health_facilities.id [delete: Cascade]
+
+Ref: doctors.healthFacilityId > health_facilities.id
+
+Ref: appointments.healthFacilityId > health_facilities.id [delete: Cascade]
+
+Ref: appointments.userId > users.id [delete: Cascade]
+
+Ref: appointments_status.appointmentId - appointments.id [delete: Cascade]

@@ -1,0 +1,239 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Feedback {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  userId       String?  @default("anonymous")
+  ratings      Int      @default(0)
+  feature      String?
+  description  String?
+  problemFaced String?
+  suggestion   String?
+  role         Role
+
+  @@map("feedbacks")
+}
+
+model User {
+  id               String                @id @default(uuid())
+  username         String                @unique
+  password         String
+  emailVerified    Boolean               @default(false)
+  appointments     Appointment[]
+  emergencyContact UserEmergencyContact?
+  userinfo         UserInfo?
+
+  @@map("users")
+}
+
+model UserInfo {
+  id                 String     @id @default(cuid())
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  firstname          String
+  lastname           String
+  salutation         Salutation
+  existingConditions Json?
+  gender             Gender
+  email              String
+  phoneNumber        String
+  role               Role       @default(User)
+  postalCode         String
+  address            String
+  userId             String     @unique
+  dateOfBirth        DateTime
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@map("users_infos")
+}
+
+model UserEmergencyContact {
+  id           String       @id @default(cuid())
+  firstname    String
+  lastname     String
+  salutation   Salutation
+  gender       Gender
+  phoneNumber  String
+  postalCode   String
+  address      String
+  userId       String       @unique
+  relationship Relationship
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("users_emergency_contact")
+}
+
+model HealthFacility {
+  id                 String              @id @default(uuid())
+  username           String              @unique
+  password           String
+  emailVerified      Boolean             @default(false)
+  appointments       Appointment[]
+  doctors            Doctor[]
+  healthFacilityInfo HealthFacilityInfo?
+
+  @@map("health_facilities")
+}
+
+model HealthFacilityInfo {
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  name             String
+  phoneNumber      String
+  streetName       String?
+  buildingName     String?
+  postalCode       String
+  blockNumber      String?
+  floorNumber      String?
+  unitNumber       String?
+  email            String
+  role             Role           @default(HealthFacility)
+  healthFacilityId String         @unique
+  website          String?
+  healthFacility   HealthFacility @relation(fields: [healthFacilityId], references: [id], onDelete: Cascade)
+
+  @@unique([healthFacilityId, email])
+  @@map("health_facilities_infos")
+}
+
+model Doctor {
+  id               String          @id @default(cuid())
+  firstname        String
+  lastname         String
+  salutation       Salutation
+  gender           Gender
+  address          String
+  phoneNumber      String
+  healthFacilityId String?
+  HealthFacility   HealthFacility? @relation(fields: [healthFacilityId], references: [id])
+
+  @@map("doctors")
+}
+
+model Appointment {
+  id                  String             @id @default(uuid())
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  gender              Gender
+  age                 Int
+  appointmentStart    DateTime
+  appointmentEnd      DateTime
+  appointmentDuration Int                @default(1)
+  symptoms            Json
+  userId              String?
+  healthFacilityId    String
+  healthFacility      HealthFacility     @relation(fields: [healthFacilityId], references: [id], onDelete: Cascade)
+  user                User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointmentStatus   AppointmentStatus?
+
+  @@map("appointments")
+}
+
+model AppointmentStatus {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  status        Status      @default(Pending)
+  remarks       String?
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@map("appointments_status")
+}
+
+model Clinic {
+  id               String   @id @default(cuid())
+  lat              Float
+  x_cor            Float
+  y_cor            Float
+  name             String
+  license_type     String
+  phone_number     String?
+  postal_code      String
+  block_no         String?
+  floor_no         String?
+  unit_no          String?
+  street_name      String?
+  building_name    String?
+  addr_type        String?
+  address          String
+  clinic_prog_code Json
+  createdAt        DateTime @default(now())
+  hci_code         String
+  updatedAt        DateTime @updatedAt
+  lng              Float
+
+  @@map("clinics")
+}
+
+enum Salutation {
+  Mr
+  Mrs
+  Miss
+}
+
+enum Gender {
+  Male
+  Female
+}
+
+enum Role {
+  User
+  HealthFacility
+}
+
+enum Status {
+  Pending
+  Approved
+  Rejected
+}
+
+enum Priority {
+  Low
+  High
+}
+
+enum Relationship {
+  Mother
+  Father
+  Sister
+  Brother
+  Spouse
+  Child
+  Grandparent
+  Grandchild
+  Aunt
+  Uncle
+  Niece
+  Nephew
+  Cousin
+  Friend
+  Other
+}
+
+model VerificationToken {
+  id      String   @id @default(uuid())
+  token   String   @unique
+  email   String
+  expires DateTime
+  role    Role
+
+  @@unique([email, token])
+  @@map("verification_tokens")
+}
